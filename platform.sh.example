@@ -1,0 +1,5 @@
+# Ubuntu
+export KEYCHAIN_PATH="/usr/bin/keychain"
+# Mac
+# export KEYCHAIN_PATH="/opt/homebrew/bin/keychain"
+
