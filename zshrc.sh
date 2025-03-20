@@ -19,3 +19,6 @@ source ~/.config/zsh/aliases.sh
 source ~/.config/zsh/env.sh
 source ~/.config/zsh/platform.sh
 source ~/.config/zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
+source ~/.config/zsh/pastefix.sh
+source ~/.config/zsh/nvm.sh
+
