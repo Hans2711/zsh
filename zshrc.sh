@@ -19,8 +19,7 @@ source ~/.config/zsh/aliases.sh
 source ~/.config/zsh/env.sh
 source ~/.config/zsh/platform.sh
 bindkey -v
-source ~/.config/zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
+# source ~/.config/zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
 source ~/.config/zsh/pastefix.sh
 source ~/.config/zsh/nvm.sh
-source ~/.config/zsh/autocomplete.sh
-
+# source ~/.config/zsh/autocomplete.sh

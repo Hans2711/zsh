@@ -210,6 +210,7 @@ function gdv() {
 }
 
 function get_default_branch() {
-	branch=$(git symbolic-ref refs/remotes/origin/HEAD)
-	${branch#refs/remotes/origin/}
+  local branch
+  branch=$(git symbolic-ref --short refs/remotes/origin/HEAD)
+  echo "${branch#origin/}"
 }
