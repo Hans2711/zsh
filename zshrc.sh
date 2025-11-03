@@ -16,10 +16,19 @@ else
 fi
 
 source ~/.config/zsh/aliases.sh
+source ~/.config/zsh/options.sh
 source ~/.config/zsh/env.sh
 source ~/.config/zsh/platform.sh
+source ~/.config/zsh/fzf.sh
 bindkey -v
-# source ~/.config/zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
 source ~/.config/zsh/pastefix.sh
 source ~/.config/zsh/nvm.sh
-# source ~/.config/zsh/autocomplete.sh
+source ~/.config/zsh/keychain.sh
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# bun completions
+[ -s "/home/diesi/.bun/_bun" ] && source "/home/diesi/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"

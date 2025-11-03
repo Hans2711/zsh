@@ -146,6 +146,13 @@ alias grh='git reset'      # equivalent to: git reset HEAD
 alias grh!='git reset --hard'
 alias gpristine='git reset --hard && git clean -dfx'
 
+# pull/push the *current* branch from/to origin
+alias gplc='git pull origin $(git symbolic-ref --short HEAD)'
+alias gpc='git push origin $(git symbolic-ref --short HEAD)'
+
+# (optional) pull with rebase for the current branch
+alias gprc='git pull --rebase origin $(git symbolic-ref --short HEAD)'
+
 # status
 alias gs='git status'
 alias gss='git status -s'
@@ -196,21 +203,115 @@ alias gtd='git tag -d'
 alias gtl='git tag -l'
 
 case $OSTYPE in
-	darwin*)
-		alias gtls="git tag -l | gsort -V"
-		;;
-	*)
-		alias gtls='git tag -l | sort -V'
-		;;
+    darwin*)
+        alias gtls="git tag -l | gsort -V"
+        ;;
+    *)
+        alias gtls='git tag -l | sort -V'
+        ;;
 esac
 
 # functions
 function gdv() {
-	git diff --ignore-all-space "$@" | vim -R -
+    git diff --ignore-all-space "$@" | vim -R -
 }
 
 function get_default_branch() {
-  local branch
-  branch=$(git symbolic-ref --short refs/remotes/origin/HEAD)
-  echo "${branch#origin/}"
+    local branch
+    branch=$(git symbolic-ref --short refs/remotes/origin/HEAD)
+    echo "${branch#origin/}"
+}
+
+
+# gcheck: fzf branch picker (valid branches only)
+gcheck() {
+    command -v fzf >/dev/null 2>&1 || { echo "fzf not found. Install fzf first."; return 1; }
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not a git repository."; return 1; }
+
+    local cur sel target lc
+    cur=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)
+
+    # Build list:
+    # - include refs/heads/*
+    # - include refs/remotes/*/* but exclude */HEAD
+    # - output only short names
+    list=$(
+        git for-each-ref \
+            --format='%(refname)%09%(refname:short)' \
+            --sort=-committerdate \
+            refs/heads refs/remotes \
+            | awk -F'\t' '
+        $1 ~ "^refs/heads/" { print $2; next }
+        $1 ~ "^refs/remotes/" {
+            # keep only remote branches like origin/feature (have a slash) and not */HEAD
+            if ($2 ~ /.+\/.+/ && $2 !~ /\/HEAD$/) print $2
+            }' \
+                | awk '!seen[$0]++'       # dedupe while preserving order
+            ) || return 1
+
+            sel=$(printf '%s\n' "$list" \
+                | awk -v cur="$cur" '{mark = ($0==cur) ? "*" : " "; printf "%s %s\n", mark, $0}' \
+                | fzf --no-multi --reverse --height=60% \
+                --prompt="Branch > " --header="* = current" \
+                --preview-window=right:70%:wrap \
+                --preview 'b=$(echo {} | sed "s/^. //"); git log --graph --decorate --oneline -n 20 --color=always -- "$b"'
+            ) || return 1
+
+            target=$(echo "$sel" | sed 's/^. //')
+            [ -z "$target" ] && return 0
+            [ "$target" = "$cur" ] && { echo "Already on $cur"; return 0; }
+
+            if git show-ref --verify --quiet "refs/heads/$target"; then
+                git switch "$target" 2>/dev/null || git checkout "$target"
+                return $?
+            fi
+
+            if printf %s "$target" | grep -q '/'; then
+                lc="${target#*/}"
+                if git show-ref --verify --quiet "refs/heads/$lc"; then
+                    git switch "$lc" 2>/dev/null || git checkout "$lc"
+                else
+                    git switch --track "$target" 2>/dev/null || git checkout --track "$target"
+                fi
+                return $?
+            fi
+
+            echo "Branch not found: $target"
+            return 1
+        }
+
+
+# gtag: pick a tag via fzf and check it out (detached HEAD)
+gtag() {
+    command -v fzf >/dev/null 2>&1 || { echo "fzf not found. Install fzf first."; return 1; }
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Not a git repository."; return 1; }
+
+    # list tags newest-first; only show names in fzf
+    local cur sel target
+    cur=$(git describe --tags --exact-match 2>/dev/null || true)
+
+    # Use for-each-ref so we can sort by creation date; fall back to plain list if needed
+    local list
+    if list=$(git for-each-ref --format='%(refname:short)' --sort=-creatordate refs/tags 2>/dev/null) && [ -n "$list" ]; then
+        :
+    else
+        list=$(git tag --list | sort) || true
+    fi
+
+    [ -z "$list" ] && { echo "No tags found."; return 0; }
+
+    sel=$(printf '%s\n' "$list" \
+        | awk -v cur="$cur" '{mark = ($0==cur) ? "*" : " "; printf "%s %s\n", mark, $0}' \
+        | fzf --no-multi --reverse --height=60% \
+        --prompt="Tag > " --header="* = current tag (exact match)" \
+        --preview-window=right:70%:wrap \
+        --preview 't=$(echo {} | sed "s/^. //"); git log --graph --decorate --oneline -n 20 --color=always -- "$t"') \
+        || return 1
+
+    target=$(echo "$sel" | sed 's/^. //')
+    [ -z "$target" ] && return 0
+    [ "$target" = "$cur" ] && { echo "Already at tag $cur"; return 0; }
+
+    # checkout tag in detached HEAD
+    git switch --detach "$target" 2>/dev/null || git checkout --detach "$target"
 }
