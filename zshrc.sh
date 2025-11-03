@@ -4,7 +4,7 @@ HYPHEN_INSENSITIVE="true"
 zstyle ':omz:update' mode auto
 # Uncomment the following line to enable command auto-correction.
 ENABLE_CORRECTION="true"
-plugins=(copyfile copypath sudo dirhistory docker laravel npm nvm zsh-autosuggestions history jsontools)
+plugins=(copyfile copypath sudo dirhistory docker laravel npm nvm zsh-autosuggestions history jsontools bun)
 source $ZSH/oh-my-zsh.sh
 export MANPATH="/usr/local/man:$MANPATH"
 export LANG=en_US.UTF-8
@@ -32,3 +32,5 @@ source ~/.config/zsh/keychain.sh
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+eval "$(zoxide init zsh)"
