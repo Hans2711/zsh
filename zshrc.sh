@@ -9,7 +9,7 @@ zstyle ':omz:update' mode auto           # Auto-update oh-my-zsh
 ENABLE_CORRECTION="true"                # Enable command auto-correction
 
 # Plugins loaded by Oh My Zsh (order preserved)
-plugins=(copyfile copypath sudo dirhistory docker laravel npm nvm zsh-autosuggestions history jsontools bun)
+plugins=(copyfile copypath sudo dirhistory docker laravel npm nvm zsh-autosuggestions history jsontools bun zsh-syntax-highlighting)
 
 # Initialize Oh My Zsh
 source $ZSH/oh-my-zsh.sh
@@ -48,14 +48,12 @@ source ~/.config/zsh/pastefix.sh         # Bracketed paste handling
 # Node Version Manager (NVM)
 ###############################################
 source ~/.config/zsh/nvm.sh
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # Load nvm bash_completion if present
 
 ###############################################
 # SSH Agent / Keychain
 ###############################################
 source ~/.config/zsh/keychain.sh
-
-# NVM bash_completion (after nvm and keychain)
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
 ###############################################
 # Bun Runtime & Completions
