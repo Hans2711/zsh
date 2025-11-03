@@ -1,18 +1,26 @@
-# Zsh options configuration
+###############################################
+# Zsh Options (grouped, no behavior change)
+###############################################
 
-# History options
-setopt append_history          # append to history file
-setopt extended_history        # write the history file in the ':start:elapsed;command' format
-unsetopt hist_beep             # don't beep when attempting to access a missing history entry
-setopt hist_expire_dups_first  # expire a duplicate event first when trimming history
-setopt hist_find_no_dups       # don't display a previously found event
-setopt hist_ignore_all_dups    # delete an old recorded event if a new event is a duplicate
-setopt hist_ignore_dups        # don't record an event that was just recorded again
-setopt hist_ignore_space       # don't record an event starting with a space
-setopt hist_no_store           # don't store history commands
-setopt hist_reduce_blanks      # remove superfluous blanks from each command line being added to the history list
-setopt hist_save_no_dups       # don't write a duplicate event to the history file
-setopt hist_verify             # don't execute immediately upon history expansion
-unsetopt inc_append_history    # do NOT write history immediately; write on exit
-unsetopt share_history         # don't share history between all sessions
-setopt hist_fcntl_lock         # lock history file during writes to avoid interleaving
+## History: recording behavior
+setopt append_history          # Append to history file instead of overwriting
+setopt hist_reduce_blanks      # Strip superfluous blanks before saving
+setopt hist_no_store           # Do not record 'history'/'fc' commands themselves
+
+## History: formatting and search
+setopt extended_history        # Use ':start:elapsed;command' format with timestamps
+setopt hist_find_no_dups       # Skip already-found event during history search
+setopt hist_verify             # After '!' expansion, show line instead of executing
+unsetopt hist_beep             # No beep on invalid history reference
+
+## History: duplicates and filtering
+setopt hist_ignore_space       # Ignore commands that start with a space
+setopt hist_ignore_dups        # Ignore immediately repeated commands
+setopt hist_ignore_all_dups    # Remove older duplicate when a new duplicate is saved
+setopt hist_save_no_dups       # Do not write duplicates to the history file
+setopt hist_expire_dups_first  # When trimming, drop oldest duplicates first
+
+## History: synchronization & locking
+unsetopt inc_append_history    # Do not write history incrementally; write on exit
+unsetopt share_history         # Do not share/import history across sessions live
+setopt hist_fcntl_lock         # Lock history file during writes to avoid interleaving
