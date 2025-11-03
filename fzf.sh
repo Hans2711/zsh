@@ -60,3 +60,25 @@ wcd() {
   [[ -n "$dir" ]] || return 1
   cd -- "$dir"
 }
+
+# hcp: fuzzy-pick a command from history and stage it in the prompt
+# - Pipes shell history into fzf, newest first
+# - Inserts the selected command into the command line without executing it
+hcp() {
+  if ! command -v fzf >/dev/null 2>&1; then
+    echo "fzf not found; install fzf to use hcp" >&2
+    return 1
+  fi
+
+  local selected
+  # List full history (newest first), drop numbers, dedupe keeping latest
+  selected=$(builtin fc -rnl 1 2>/dev/null \
+    | awk 'NF' \
+    | awk '!seen[$0]++' \
+    | fzf --no-sort --reverse --height=40% --prompt="history > ")
+
+  [[ -n "$selected" ]] || return 1
+
+  # Put into the next prompt's command line without executing
+  print -rz -- "$selected"
+}

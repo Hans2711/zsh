@@ -4,7 +4,7 @@ HYPHEN_INSENSITIVE="true"
 zstyle ':omz:update' mode auto
 # Uncomment the following line to enable command auto-correction.
 ENABLE_CORRECTION="true"
-plugins=(copyfile copypath sudo dirhistory docker laravel npm)
+plugins=(copyfile copypath sudo dirhistory docker laravel npm nvm zsh-autosuggestions history)
 source $ZSH/oh-my-zsh.sh
 export MANPATH="/usr/local/man:$MANPATH"
 export LANG=en_US.UTF-8
