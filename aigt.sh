@@ -154,8 +154,12 @@ compare_versions() {
     local v1="$1"
     local v2="$2"
     
-    IFS='|' read -r _ major1 minor1 patch1 <<< "$v1"
-    IFS='|' read -r _ major2 minor2 patch2 <<< "$v2"
+    local -a parts1 parts2
+    IFS='|' read -rA parts1 <<< "$v1"
+    IFS='|' read -rA parts2 <<< "$v2"
+    
+    local major1="${parts1[2]}" minor1="${parts1[3]}" patch1="${parts1[4]}"
+    local major2="${parts2[2]}" minor2="${parts2[3]}" patch2="${parts2[4]}"
     
     if ((major1 != major2)); then
         ((major1 > major2)) && echo "1" || echo "-1"
@@ -173,7 +177,14 @@ get_latest_semver_tag() {
     local latest_version=""
     local latest_tag=""
     
-    mapfile -t tags < <(get_all_tags)
+    # Read tags into array - compatible with both bash and zsh
+    local tag_list
+    tag_list=$(get_all_tags)
+    if [[ -n "$tag_list" ]]; then
+        tags=("${(@f)tag_list}")
+    else
+        tags=()
+    fi
     
     for tag in "${tags[@]}"; do
         if parsed=$(parse_semver "$tag"); then
@@ -194,11 +205,20 @@ get_latest_semver_tag() {
 
 detect_tag_prefix() {
     local tags
-    mapfile -t tags < <(get_all_tags)
+    # Read tags into array - compatible with both bash and zsh
+    local tag_list
+    tag_list=$(get_all_tags)
+    if [[ -n "$tag_list" ]]; then
+        tags=("${(@f)tag_list}")
+    else
+        tags=()
+    fi
     
     for tag in "${tags[@]}"; do
         if parsed=$(parse_semver "$tag"); then
-            IFS='|' read -r prefix _ _ _ <<< "$parsed"
+            local -a parts
+            IFS='|' read -rA parts <<< "$parsed"
+            local prefix="${parts[1]}"
             echo "$prefix"
             return 0
         fi
@@ -211,7 +231,9 @@ increment_version() {
     local version="$1"
     local increment_type="$2"
     
-    IFS='|' read -r prefix major minor patch <<< "$version"
+    local -a parts
+    IFS='|' read -rA parts <<< "$version"
+    local prefix="${parts[1]}" major="${parts[2]}" minor="${parts[3]}" patch="${parts[4]}"
     
     case "$increment_type" in
         patch)
@@ -228,7 +250,9 @@ increment_version() {
 
 format_version() {
     local version="$1"
-    IFS='|' read -r prefix major minor patch <<< "$version"
+    local -a parts
+    IFS='|' read -rA parts <<< "$version"
+    local prefix="${parts[1]}" major="${parts[2]}" minor="${parts[3]}" patch="${parts[4]}"
     echo "${prefix}${major}.${minor}.${patch}"
 }
 
@@ -325,8 +349,8 @@ prompt_version_selection() {
     local prefix="$2"
     
     if [[ -z "$current_version" ]]; then
-        # No current version, suggest initial
-        current_version="${prefix}|0|1|0"
+        # No current version, start from 0.0.0 so first version will be 0.0.1, 0.1.0, or 1.0.0
+        current_version="${prefix}|0|0|0"
     else
         current_version=$(parse_semver "$current_version")
     fi
@@ -338,15 +362,15 @@ prompt_version_selection() {
     local major_version
     major_version=$(increment_version "$current_version" "major")
     
-    echo -e "${BOLD}Select version increment:${RESET}"
-    echo ""
-    echo -e "  ${GREEN}1)${RESET} Patch  → $(format_version "$patch_version")  ${CYAN}(Bug fixes, small changes)${RESET}"
-    echo -e "  ${GREEN}2)${RESET} Minor  → $(format_version "$minor_version")  ${CYAN}(New features, backwards compatible)${RESET}"
-    echo -e "  ${GREEN}3)${RESET} Major  → $(format_version "$major_version")  ${CYAN}(Breaking changes)${RESET}"
-    echo ""
+    echo -e "${BOLD}Select version increment:${RESET}" >&2
+    echo "" >&2
+    echo -e "  ${GREEN}1)${RESET} Patch  → $(format_version "$patch_version")  ${CYAN}(Bug fixes, small changes)${RESET}" >&2
+    echo -e "  ${GREEN}2)${RESET} Minor  → $(format_version "$minor_version")  ${CYAN}(New features, backwards compatible)${RESET}" >&2
+    echo -e "  ${GREEN}3)${RESET} Major  → $(format_version "$major_version")  ${CYAN}(Breaking changes)${RESET}" >&2
+    echo "" >&2
     
     local choice
-    read -rp "Enter choice (1-3) or 'q' to quit: " choice
+    read "choice?Enter choice (1-3) or 'q' to quit: "
     
     case "$choice" in
         1)
@@ -383,7 +407,7 @@ confirm_action() {
     fi
     
     echo ""
-    read -rp "Proceed? (y/N): " confirm
+    read "confirm?Proceed? (y/N): "
     
     [[ "$confirm" =~ ^[Yy]$ ]]
 }
@@ -453,7 +477,14 @@ cmd_list() {
     fi
     
     local tags
-    mapfile -t tags < <(get_all_tags)
+    # Read tags into array - compatible with both bash and zsh
+    local tag_list
+    tag_list=$(get_all_tags)
+    if [[ -n "$tag_list" ]]; then
+        tags=("${(@f)tag_list}")
+    else
+        tags=()
+    fi
     
     if [[ ${#tags[@]} -eq 0 ]]; then
         show_info "No tags found in repository"
@@ -494,7 +525,7 @@ cmd_init() {
         return 0
     fi
     
-    read -rp "Create initial tag ${tag_name}? (y/N): " confirm
+    read "confirm?Create initial tag ${tag_name}? (y/N): "
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
         show_info "Operation cancelled"
         return 0
@@ -576,7 +607,10 @@ cmd_default() {
             return 0
         fi
         
-        IFS='|' read -r selected_type selected_version <<< "$selection"
+        local -a sel_parts
+        IFS='|' read -rA sel_parts <<< "$selection"
+        selected_type="${sel_parts[1]}"
+        selected_version="${sel_parts[2]}|${sel_parts[3]}|${sel_parts[4]}|${sel_parts[5]}"
     fi
     
     local tag_name
@@ -610,7 +644,9 @@ cmd_default() {
     fi
     
     # Create tag
-    IFS='|' read -r _ major minor patch <<< "$selected_version"
+    local -a ver_parts
+    IFS='|' read -rA ver_parts <<< "$selected_version"
+    local major="${ver_parts[2]}" minor="${ver_parts[3]}" patch="${ver_parts[4]}"
     create_tag "$tag_name" "Release ${major}.${minor}.${patch}"
     show_success "✅ Created tag ${tag_name}"
     
@@ -710,9 +746,9 @@ parse_args() {
     
     # Validate auto increment flags
     local auto_count=0
-    [[ "$AUTO_PATCH" == "true" ]] && ((auto_count++))
-    [[ "$AUTO_MINOR" == "true" ]] && ((auto_count++))
-    [[ "$AUTO_MAJOR" == "true" ]] && ((auto_count++))
+    [[ "$AUTO_PATCH" == "true" ]] && auto_count=$((auto_count + 1))
+    [[ "$AUTO_MINOR" == "true" ]] && auto_count=$((auto_count + 1))
+    [[ "$AUTO_MAJOR" == "true" ]] && auto_count=$((auto_count + 1))
     
     if [[ $auto_count -gt 1 ]]; then
         show_error "Only one auto increment flag can be specified"
