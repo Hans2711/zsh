@@ -37,6 +37,7 @@ source ~/.config/zsh/options.sh
 source ~/.config/zsh/env.sh
 source ~/.config/zsh/platform.sh
 source ~/.config/zsh/fzf.sh
+source ~/.config/zsh/aigt.sh
 
 ###############################################
 # Key Bindings & Paste Handling
@@ -68,3 +69,8 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # Zoxide (smart cd)
 ###############################################
 eval "$(zoxide init zsh)"
+
+# opencode
+export PATH=/home/diesi/.opencode/bin:$PATH
+
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
