@@ -140,10 +140,20 @@ parse_semver() {
     local regex='^(v?)([0-9]+)\.([0-9]+)\.([0-9]+)$'
     
     if [[ $tag =~ $regex ]]; then
-        local prefix="${BASH_REMATCH[1]}"
-        local major="${BASH_REMATCH[2]}"
-        local minor="${BASH_REMATCH[3]}"
-        local patch="${BASH_REMATCH[4]}"
+        # In zsh, use match array; in bash, use BASH_REMATCH
+        if [[ -n "${match}" ]]; then
+            # zsh
+            local prefix="${match[1]}"
+            local major="${match[2]}"
+            local minor="${match[3]}"
+            local patch="${match[4]}"
+        else
+            # bash
+            local prefix="${BASH_REMATCH[1]}"
+            local major="${BASH_REMATCH[2]}"
+            local minor="${BASH_REMATCH[3]}"
+            local patch="${BASH_REMATCH[4]}"
+        fi
         echo "${prefix}|${major}|${minor}|${patch}"
         return 0
     fi
